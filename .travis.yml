@@ -2,7 +2,7 @@
 if: type != push OR branch = master OR branch =~ /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
 os: osx
-osx_image: xcode10.1
+osx_image: xcode10.3
 language: swift
 xcode_project: LegibleError.xcodeproj
 xcode_scheme: LegibleError-Package
@@ -15,21 +15,22 @@ jobs:
       script: git diff --exit-code
 
     - name: macOS / Swift 4.0.3
-      stage: test
+      stage: test-swiftpm
       script: swift test --parallel -Xswiftc -swift-version -Xswiftc 4
 
     - name: macOS / Swift 4.2.1
       script: swift test --parallel
 
-    - name: macOS / Swift 5.0.0
-      osx_image: xcode10.2
-      script: swift test --parallel
+    - name: macOS / Swift 5.0.1
+      osx_image: xcode10.3
+      script: swift test --parallel -Xswiftc -warnings-as-errors
 
-    - name: macOS / Swift 5.1.0
-      osx_image: xcode11
-      script: swift test --parallel
+    - name: macOS / Swift 5.1.3
+      osx_image: xcode11.3
+      script: swift test --parallel -Xswiftc -warnings-as-errors
 
     - &xcodebuild
+      stage: test-xcode
       before_install: swift package generate-xcodeproj --enable-code-coverage
       xcode_destination: 'platform=iOS Simulator,OS=latest,name=iPhone SE'
       name: iOS / Swift 4.2.1
@@ -40,35 +41,42 @@ jobs:
       name: tvOS / Swift 4.2.1
 
     - <<: *xcodebuild
-      osx_image: xcode10.2
+      osx_image: xcode10.3
       xcode_destination: 'platform=macOS'
-      name: macOS / Swift 5.0.0
+      name: macOS / Swift 5.0.1
 
     - <<: *xcodebuild
-      osx_image: xcode11
+      osx_image: xcode11.3
       xcode_destination: 'platform=macOS'
-      name: macOS / Swift 5.1.0
+      name: macOS / Swift 5.1.3
 
     - &linux
       name: Linux / Swift 4.2.1
       env: SWIFT_VERSION=4.2.1
       os: linux
+      stage: test-linux
       language: generic
       sudo: false
       install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
       script: swift test
 
     - <<: *linux
-      env: SWIFT_VERSION='5.0'
-      name: Linux / Swift 5.0.0
-      script: swift test --enable-code-coverage
+      env: SWIFT_VERSION='5.1.3'
+      name: Linux / Swift 5.1.3
+      script: swift test --enable-code-coverage -Xswiftc -warnings-as-errors
+
+    # - <<: *linux
+    #   env: SWIFT_VERSION=5.2-DEVELOPMENT-SNAPSHOT-2020-01-22-a
+    #   name: Linux / Swift 5.2.0-dev+2020-01-22-a
+    #   script: swift test --enable-code-coverage
 
     - stage: deploy
+      osx_image: xcode11
       if: branch =~ ^\d+\.\d+\.\d+$
       name: CocoaPods
-      before_install: |
-        curl -O https://raw.githubusercontent.com/mxcl/Path.swift/master/.github/deploy
-        chmod u+x deploy
+      before_install:
+        - curl -fO https://raw.githubusercontent.com/mxcl/ops/master/deploy
+        - chmod u+x deploy
       install: brew install mxcl/made/swift-sh
       before_script: ./deploy generate-podspec
       script: pod trunk push

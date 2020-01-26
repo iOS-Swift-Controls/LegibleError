@@ -7,6 +7,18 @@ let addressPattern = "0x.?+"
 let addressPattern = "\\$.?+"
 #endif
 
+enum InternalScopeErrorEnum: Error {
+   case a
+}
+
+public enum PublicScopeErrorEnum: Error {
+   case a
+}
+
+private enum PrivateScopeErrorEnum: Error {
+   case a
+}
+
 class Test: XCTestCase {
     func test_simple_Swift_enum() {
         enum Foo: Error {
@@ -27,6 +39,22 @@ class Test: XCTestCase {
     #endif
         XCTAssertEqual(String(describing: Foo.a), "a")
     }
+
+    func test_simple_Swift_enum_internal_scope() {
+        XCTAssertEqual(InternalScopeErrorEnum.a.legibleDescription, "InternalScopeErrorEnum.a")
+        XCTAssertEqual(InternalScopeErrorEnum.a.legibleLocalizedDescription, "\(theOperationCouldNotBeCompleted) (InternalScopeErrorEnum.a)")
+    }
+
+    func test_simple_Swift_enum_public_scope() {
+        XCTAssertEqual(PublicScopeErrorEnum.a.legibleDescription, "PublicScopeErrorEnum.a")
+        XCTAssertEqual(PublicScopeErrorEnum.a.legibleLocalizedDescription, "\(theOperationCouldNotBeCompleted) (PublicScopeErrorEnum.a)")
+    }
+
+    func test_simple_Swift_enum_private_scope() {
+        XCTAssertEqual(PrivateScopeErrorEnum.a.legibleDescription, "PrivateScopeErrorEnum.a")
+        XCTAssertEqual(PrivateScopeErrorEnum.a.legibleLocalizedDescription, "\(theOperationCouldNotBeCompleted) (PrivateScopeErrorEnum.a)")
+    }
+
 
     func test_Swift_struct() {
         struct Foo: Error {
